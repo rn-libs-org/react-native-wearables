@@ -1,5 +1,6 @@
 #import <WearablesSpec/WearablesSpec.h>
+#import <React/RCTEventEmitter.h>
 
-@interface Wearables : NSObject <NativeWearablesSpec>
+@interface Wearables : RCTEventEmitter <NativeWearablesSpec>
 
 @end
