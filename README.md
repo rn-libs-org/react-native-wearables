@@ -25,8 +25,8 @@ A cross-platform React Native library for communicating with smartwatches — **
   - [Receive Messages](#receive-messages)
 - [API Reference](#api-reference)
 - [Watch-Side Code](#watch-side-code)
-  - [Wear OS (Jetpack Compose)](#wear-os-jetpack-compose)
-  - [Apple Watch (SwiftUI)](#apple-watch-swiftui)
+  - [Wear OS (Kotlin)](#wear-os-kotlin)
+  - [Apple Watch (Swift)](#apple-watch-swift)
 - [Watch Development Guidelines](#watch-development-guidelines)
   - [Wear OS Setup](#wear-os-setup)
   - [Apple Watch Setup](#apple-watch-setup)
@@ -159,57 +159,54 @@ Subscribe to incoming messages from the watch. Returns an unsubscribe function.
 
 ## Watch-Side Code
 
-### Wear OS (Jetpack Compose)
+### Wear OS (Kotlin)
 
-Below is a complete Wear OS activity that can **send messages to** and **receive messages from** your React Native app.
+Below is the minimal code to **send messages to** and **receive messages from** your React Native app on a Wear OS watch.
 
 > **Important:** The Wear OS app and your React Native Android app must share the **same `applicationId`** (package name) and be **signed with the same key**.
 
-```kotlin
-package com.yourapp.presentation
+#### Send a message to the phone
 
-import android.os.Bundle
-import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.*
-import com.google.android.gms.wearable.*
+```kotlin
+import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
+
+// The path must match the one used in react-native-wearables
+private const val MESSAGE_PATH = "/wearables_message"
+
+fun sendMessageToPhone(context: Context) {
+    Wearable.getNodeClient(context).connectedNodes.addOnSuccessListener { nodes ->
+        val node = nodes.firstOrNull { it.isNearby } ?: return@addOnSuccessListener
+
+        val payload = JSONObject().apply {
+            put("action", "watchUpdate")
+            put("heartRate", 72)
+            put("timestamp", System.currentTimeMillis())
+        }
+        val data = payload.toString().toByteArray(Charsets.UTF_8)
+
+        Wearable.getMessageClient(context)
+            .sendMessage(node.id, MESSAGE_PATH, data)
+            .addOnSuccessListener { Log.d("Wear", "Sent") }
+            .addOnFailureListener { e -> Log.e("Wear", "Failed", e) }
+    }
+}
+```
+
+#### Receive messages from the phone
+
+Implement `MessageClient.OnMessageReceivedListener` and register it:
+
+```kotlin
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
 
 class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
 
-    companion object {
-        private const val TAG = "WearApp"
-        // Must match the path used in react-native-wearables
-        private const val MESSAGE_PATH = "/wearables_message"
-    }
-
-    private var lastMessage by mutableStateOf("No messages yet")
-    private var connectedNode: Node? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Register the message listener
         Wearable.getMessageClient(this).addListener(this)
-
-        // Find the connected phone node
-        Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
-            connectedNode = nodes.firstOrNull { it.isNearby }
-            Log.d(TAG, "Connected node: ${connectedNode?.displayName}")
-        }
-
-        setContent {
-            WearApp(
-                lastMessage = lastMessage,
-                onSendMessage = { sendMessageToPhone() }
-            )
-        }
     }
 
     override fun onDestroy() {
@@ -217,168 +214,90 @@ class MainActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         super.onDestroy()
     }
 
-    /**
-     * Receives messages from the React Native mobile app.
-     */
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == MESSAGE_PATH) {
+        if (messageEvent.path == "/wearables_message") {
             val json = String(messageEvent.data, Charsets.UTF_8)
-            Log.d(TAG, "Received: $json")
-            lastMessage = json
-        }
-    }
-
-    /**
-     * Sends a JSON message to the mobile app via the data bytes.
-     * The mobile app's `onMessageReceived` listener will pick this up.
-     */
-    private fun sendMessageToPhone() {
-        val node = connectedNode
-        if (node == null) {
-            Log.w(TAG, "No connected phone node found")
-            lastMessage = "Error: No phone connected"
-            return
-        }
-
-        val payload = JSONObject().apply {
-            put("action", "watchUpdate")
-            put("heartRate", 72)
-            put("timestamp", System.currentTimeMillis())
-        }
-
-        Wearable.getMessageClient(this)
-            .sendMessage(node.id, MESSAGE_PATH, payload.toString().toByteArray(Charsets.UTF_8))
-            .addOnSuccessListener {
-                Log.d(TAG, "Message sent to phone")
-                lastMessage = "Sent: ${payload.toString()}"
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Send failed", e)
-                lastMessage = "Send failed: ${e.message}"
-            }
-    }
-}
-
-@Composable
-fun WearApp(lastMessage: String, onSendMessage: () -> Unit) {
-    MaterialTheme {
-        Scaffold(
-            timeText = { TimeText() }
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Wearables Demo", style = MaterialTheme.typography.title3)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(lastMessage, style = MaterialTheme.typography.body2)
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onSendMessage) {
-                    Text("Send to Phone")
-                }
-            }
+            Log.d("Wear", "Received from phone: $json")
         }
     }
 }
 ```
 
-**Wear OS `build.gradle.kts` dependencies:**
+#### Required Wear OS dependency
 
-```kotlin
+Add this to your Wear OS app's `build.gradle`:
+
+```groovy
 dependencies {
-    implementation("com.google.android.gms:play-services-wearable:18.2.0")
-    implementation("androidx.wear.compose:compose-material:1.4.1")
-    implementation("androidx.wear.compose:compose-foundation:1.4.1")
-    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation "com.google.android.gms:play-services-wearable:18.2.0"
 }
 ```
 
-### Apple Watch (SwiftUI)
+### Apple Watch (Swift)
 
-Below is a WatchKit extension that communicates with your React Native iOS app.
+Below is the minimal code to **send messages to** and **receive messages from** your React Native iOS app on an Apple Watch.
+
+#### Send a message to the phone
 
 ```swift
-import SwiftUI
 import WatchConnectivity
 
-class PhoneConnector: NSObject, ObservableObject, WCSessionDelegate {
-    @Published var lastMessage: String = "No messages yet"
+func sendMessageToPhone() {
+    guard WCSession.default.isReachable else {
+        print("Phone not reachable")
+        return
+    }
 
-    override init() {
-        super.init()
+    let payload: [String: Any] = [
+        "action": "watchUpdate",
+        "heartRate": 72,
+        "timestamp": Date().timeIntervalSince1970
+    ]
+
+    WCSession.default.sendMessage(payload, replyHandler: { reply in
+        print("Sent, reply: \(reply)")
+    }, errorHandler: { error in
+        print("Send failed: \(error.localizedDescription)")
+    })
+}
+```
+
+#### Receive messages from the phone
+
+Implement `WCSessionDelegate` and activate the session:
+
+```swift
+import WatchConnectivity
+
+class SessionManager: NSObject, WCSessionDelegate {
+
+    static let shared = SessionManager()
+
+    func activate() {
         if WCSession.isSupported() {
-            let session = WCSession.default
-            session.delegate = self
-            session.activate()
+            WCSession.default.delegate = self
+            WCSession.default.activate()
         }
     }
-
-    func sendMessageToPhone() {
-        guard WCSession.default.isReachable else {
-            lastMessage = "Phone not reachable"
-            return
-        }
-
-        let payload: [String: Any] = [
-            "action": "watchUpdate",
-            "heartRate": 72,
-            "timestamp": Date().timeIntervalSince1970
-        ]
-
-        WCSession.default.sendMessage(payload, replyHandler: { _ in
-            DispatchQueue.main.async {
-                self.lastMessage = "Sent: \(payload)"
-            }
-        }, errorHandler: { error in
-            DispatchQueue.main.async {
-                self.lastMessage = "Error: \(error.localizedDescription)"
-            }
-        })
-    }
-
-    // MARK: - WCSessionDelegate
 
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
-                 error: Error?) {
-        // Session activated
-    }
+                 error: Error?) {}
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        DispatchQueue.main.async {
-            self.lastMessage = "\(message)"
-        }
+        print("Received from phone: \(message)")
     }
 
     func session(_ session: WCSession,
                  didReceiveMessage message: [String: Any],
                  replyHandler: @escaping ([String: Any]) -> Void) {
-        DispatchQueue.main.async {
-            self.lastMessage = "\(message)"
-        }
+        print("Received from phone: \(message)")
         replyHandler(["status": "received"])
     }
 }
-
-struct ContentView: View {
-    @StateObject private var connector = PhoneConnector()
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("Wearables Demo")
-                .font(.headline)
-            Text(connector.lastMessage)
-                .font(.caption)
-                .multilineTextAlignment(.center)
-            Button("Send to Phone") {
-                connector.sendMessageToPhone()
-            }
-        }
-        .padding()
-    }
-}
 ```
+
+Call `SessionManager.shared.activate()` early in your watch app's lifecycle (e.g. in `@main` App `init`).
 
 ## Watch Development Guidelines
 
