@@ -1,97 +1,102 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Wearables Example App
 
-# Getting Started
+A demo React Native app that exercises every feature of `react-native-wearables` — checking watch status, sending messages, and receiving messages from a paired watch.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Prerequisites
 
-## Step 1: Start Metro
+| Tool             | Version                                    |
+| ---------------- | ------------------------------------------ |
+| Node.js          | See root `.nvmrc`                          |
+| Yarn             | v1 classic                                 |
+| React Native CLI | Included via `@react-native-community/cli` |
+| Xcode            | 15+ (for iOS)                              |
+| Android Studio   | Latest stable (for Android)                |
+| CocoaPods        | `gem install cocoapods`                    |
+| Ruby Bundler     | `gem install bundler` (for iOS)            |
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Setup
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+From the **repository root**:
 
 ```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+yarn          # install all workspace dependencies
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+## Running on Android
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+# From the repo root
+yarn example android
 ```
 
-### iOS
+This starts Metro and builds/installs the app on the connected Android device or emulator.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+### Wear OS Testing
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+To test watch communication on Android:
+
+1. Create a **Wear OS emulator** in Android Studio (use a Google Play system image).
+2. Create an **Android phone emulator** (also Google Play image).
+3. Pair them following the [official pairing guide](https://developer.android.com/training/wearables/get-started/connect-phone).
+4. Build and install a Wear OS companion app with the **same `applicationId`** and **signing key** as this example app. See the [Watch-Side Code](../README.md#wear-os-jetpack-compose) section in the main README for the full source.
+
+## Running on iOS
+
+Install CocoaPods dependencies first:
 
 ```sh
+# From the repo root (one-time Ruby setup)
+cd example
 bundle install
+bundle exec pod install --project-directory=ios
+cd ..
 ```
 
-Then, and every time you update your native dependencies, run:
+Then run:
 
 ```sh
-bundle exec pod install
+yarn example ios
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### Apple Watch Testing
+
+1. In Xcode, add a **watchOS App** target to the `WearablesExample.xcworkspace`.
+2. The Watch app bundle ID must be `<your-ios-bundle-id>.watchkitapp`.
+3. In the Simulator menu, pair the iPhone simulator with a Watch simulator (Device → Pair with Watch).
+4. See the [Watch-Side Code](../README.md#apple-watch-swiftui) section in the main README for the SwiftUI source.
+
+## Running on Web
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+yarn example web
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+> Note: Watch communication APIs are not available on Web — the app will display UI but native calls will not function.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## What the App Does
 
-## Step 3: Modify your app
+| Feature                   | Description                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Check Watch Status**    | Calls `isPaired()`, `isReachable()`, and `isWatchAppInstalled()` and displays the results |
+| **Send Message to Watch** | Sends a JSON payload via `sendMessage()`                                                  |
+| **Receive Messages**      | Listens with `onMessageReceived()` and displays the last received message                 |
 
-Now that you have successfully run the app, let's make changes!
+## Project Structure
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+```
+example/
+├── src/
+│   └── App.tsx           # Main demo screen
+├── index.js              # Entry point
+├── android/              # Android project
+├── ios/                  # iOS project + Pods
+├── package.json
+└── metro.config.js
+```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Troubleshooting
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **Android build fails:** Run `cd example/android && ./gradlew clean` then try again.
+- **iOS pod errors:** Run `cd example/ios && pod install --repo-update`.
+- **"Wearable API not available":** Ensure the Android emulator has Google Play Services and the Wear OS companion app is installed.
+- **Messages not received:** Verify both apps share the same `applicationId`/bundle ID and signing key.
