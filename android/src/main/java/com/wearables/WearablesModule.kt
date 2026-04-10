@@ -6,8 +6,12 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
@@ -45,84 +49,81 @@ class WearablesModule(reactContext: ReactApplicationContext) :
     super.invalidate()
   }
 
+  private fun isWearableApiAvailable(): Boolean {
+    val context = reactApplicationContext
+    val nc = nodeClient ?: return false
+
+    val gpStatus = GoogleApiAvailability.getInstance()
+      .isGooglePlayServicesAvailable(context)
+    if (gpStatus != ConnectionResult.SUCCESS) return false
+
+    return try {
+      Tasks.await(
+        GoogleApiAvailability.getInstance().checkApiAvailability(nc)
+      )
+      true
+    } catch (_: Exception) {
+      false
+    }
+  }
+
+  private fun getConnectedNodes(): List<Node>? {
+    if (!isWearableApiAvailable()) return null
+    val nc = nodeClient ?: return null
+    return try {
+      Tasks.await(nc.connectedNodes)
+    } catch (_: Exception) {
+      null
+    }
+  }
+
+  private fun getNearbyNodes(): List<Node> {
+    return getConnectedNodes()?.filter { it.isNearby } ?: emptyList()
+  }
+
   // Wearable Module Methods
-
   override fun sendMessage(message: ReadableMap, promise: Promise) {
-    val nc = nodeClient
     val mc = messageClient
-
-    if (nc == null || mc == null) {
+    if (mc == null) {
       promise.reject("ERR_UNSUPPORTED", "Wearable API is not available on this device")
       return
     }
 
-    nc.connectedNodes.addOnSuccessListener { nodes ->
-      if (nodes.isEmpty()) {
+    try {
+      val nearbyNodes = getNearbyNodes()
+      if (nearbyNodes.isEmpty()) {
         promise.reject("ERR_NO_NODES", "No connected wearable nodes found")
-        return@addOnSuccessListener
+        return
       }
 
       val jsonObject = JSONObject(message.toHashMap())
       val data = jsonObject.toString().toByteArray(Charsets.UTF_8)
 
-      val totalNodes = nodes.size
-      var completedCount = 0
-      var hasError = false
+      val targetNode = nearbyNodes.first()
 
-      for (node in nodes) {
-        mc.sendMessage(node.id, MESSAGE_PATH, data)
-          .addOnSuccessListener {
-            synchronized(this) {
-              completedCount++
-              if (completedCount == totalNodes && !hasError) {
-                promise.resolve(null)
-              }
-            }
-          }
-          .addOnFailureListener { e ->
-            synchronized(this) {
-              if (!hasError) {
-                hasError = true
-                promise.reject("ERR_SEND_FAILED", e.message, e)
-              }
-            }
-          }
-      }
-    }.addOnFailureListener { e ->
-      promise.reject("ERR_NODE_ERROR", e.message, e)
+      Tasks.await(mc.sendMessage(targetNode.id, MESSAGE_PATH, data))
+      promise.resolve(null)
+    } catch (e: Exception) {
+      promise.reject("ERR_SEND_FAILED", e.message, e)
     }
   }
 
   override fun isPaired(promise: Promise) {
-    val nc = nodeClient
-    if (nc == null) {
+    try {
+      val nodes = getConnectedNodes()
+      promise.resolve(nodes != null && nodes.isNotEmpty())
+    } catch (e: Exception) {
       promise.resolve(false)
-      return
     }
-
-    nc.connectedNodes
-      .addOnSuccessListener { nodes ->
-        promise.resolve(nodes.isNotEmpty())
-      }
-      .addOnFailureListener {
-        promise.resolve(false)
-      }
   }
 
   override fun isReachable(promise: Promise) {
-    val nc = nodeClient
-    if (nc == null) {
+    try {
+      val nearbyNodes = getNearbyNodes()
+      promise.resolve(nearbyNodes.isNotEmpty())
+    } catch (e: Exception) {
       promise.resolve(false)
-      return
     }
-
-    nc.connectedNodes
-      .addOnSuccessListener { nodes ->
-        promise.resolve(nodes.isNotEmpty())
-      }
-      .addOnFailureListener {
-        promise.resolve(false)
-      }
   }
 
   override fun isWatchAppInstalled(promise: Promise) {
@@ -138,22 +139,35 @@ class WearablesModule(reactContext: ReactApplicationContext) :
     listenerCount = (listenerCount - count.toInt()).coerceAtLeast(0)
   }
 
-  // MessageClient.OnMessageReceivedListener
-
   override fun onMessageReceived(messageEvent: MessageEvent) {
-    if (listenerCount <= 0 || messageEvent.path != MESSAGE_PATH) return
+    if (listenerCount <= 0) return
 
-    val data = String(messageEvent.data, Charsets.UTF_8)
-    try {
-      val jsonObject = JSONObject(data)
-      val params = convertJsonToWritableMap(jsonObject)
-      sendEvent(EVENT_MESSAGE_RECEIVED, params)
-    } catch (e: Exception) {
-      // If not valid JSON, wrap raw string
-      val params = Arguments.createMap().apply {
-        putString("data", data)
+    if (messageEvent.path == MESSAGE_PATH) {
+      val data = String(messageEvent.data, Charsets.UTF_8)
+      try {
+        val jsonObject = JSONObject(data)
+        val params = convertJsonToWritableMap(jsonObject)
+        sendEvent(EVENT_MESSAGE_RECEIVED, params)
+      } catch (e: Exception) {
+        val params = Arguments.createMap().apply {
+          putString("data", data)
+        }
+        sendEvent(EVENT_MESSAGE_RECEIVED, params)
       }
-      sendEvent(EVENT_MESSAGE_RECEIVED, params)
+    } else {
+      try {
+        val jsonObject = JSONObject(messageEvent.path)
+        val params = convertJsonToWritableMap(jsonObject)
+        sendEvent(EVENT_MESSAGE_RECEIVED, params)
+      } catch (e: Exception) {
+        val params = Arguments.createMap().apply {
+          putString("path", messageEvent.path)
+          if (messageEvent.data != null && messageEvent.data.isNotEmpty()) {
+            putString("data", String(messageEvent.data, Charsets.UTF_8))
+          }
+        }
+        sendEvent(EVENT_MESSAGE_RECEIVED, params)
+      }
     }
   }
 

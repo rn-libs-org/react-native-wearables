@@ -25,8 +25,6 @@ RCT_EXPORT_MODULE()
   return self;
 }
 
-#pragma mark - Supported Events
-
 - (NSArray<NSString *> *)supportedEvents {
   return @[@"onMessageReceived"];
 }
@@ -38,8 +36,6 @@ RCT_EXPORT_MODULE()
 - (void)stopObserving {
   _hasListeners = NO;
 }
-
-#pragma mark - Wearable Module Methods
 
 - (void)sendMessage:(NSDictionary *)message
             resolve:(RCTPromiseResolveBlock)resolve
@@ -92,8 +88,6 @@ RCT_EXPORT_MODULE()
   resolve(@([WCSession defaultSession].isWatchAppInstalled));
 }
 
-#pragma mark - WCSessionDelegate
-
 - (void)session:(WCSession *)session
     activationDidCompleteWithState:(WCSessionActivationState)activationState
                              error:(NSError *)error {
@@ -124,8 +118,6 @@ RCT_EXPORT_MODULE()
   }
   replyHandler(@{});
 }
-
-#pragma mark - Turbo Module
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params {
