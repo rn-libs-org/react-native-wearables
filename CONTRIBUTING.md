@@ -135,6 +135,6 @@ This handles version bumping (semver), git tags, and npm publishing.
 | `yarn example android` | Run example on Android             |
 | `yarn example ios`     | Run example on iOS                 |
 | `yarn example web`     | Run example on Web                 |
-| `yarn bob`             | Build the library output           |
+| `yarn prepare`         | Build the library output           |
 | `yarn clean`           | Remove build artifacts             |
 | `yarn release`         | Publish a new version              |
