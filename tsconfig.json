@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-wearables": ["./src/index"]
+      "@rn-libs/react-native-wearables": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

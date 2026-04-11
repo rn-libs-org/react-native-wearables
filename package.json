@@ -1,7 +1,7 @@
 {
-  "name": "react-native-wearables",
+  "name": "@rn-libs/react-native-wearables",
   "version": "0.1.0",
-  "description": "react-native-wearables",
+  "description": "React Native Wearables - Connect to Apple Watch & Wear OS",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
@@ -32,7 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-wearables-example",
+    "example": "yarn workspace @rn-libs/react-native-wearables-example",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
     "typecheck": "tsc",
@@ -58,7 +58,8 @@
   },
   "homepage": "https://github.com/harishkumar69/react-native-wearables#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^20.5.0",

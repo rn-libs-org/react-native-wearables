@@ -1,4 +1,4 @@
-# react-native-wearables
+# @rn-libs/react-native-wearables
 
 A cross-platform React Native library for communicating with smartwatches — **Apple Watch** (WatchConnectivity) and **Wear OS** (Wearable MessageClient).
 
@@ -37,9 +37,9 @@ A cross-platform React Native library for communicating with smartwatches — **
 ## Installation
 
 ```sh
-npm install react-native-wearables
+npm install @rn-libs/react-native-wearables
 # or
-yarn add react-native-wearables
+yarn add @rn-libs/react-native-wearables
 ```
 
 ### iOS
@@ -77,7 +77,7 @@ import {
   isPaired,
   isReachable,
   isWatchAppInstalled,
-} from 'react-native-wearables';
+} from '@rn-libs/react-native-wearables';
 
 async function checkWatch() {
   const paired = await isPaired();
@@ -91,7 +91,7 @@ async function checkWatch() {
 ### Send Messages
 
 ```tsx
-import { sendMessage } from 'react-native-wearables';
+import { sendMessage } from '@rn-libs/react-native-wearables';
 
 async function sendToWatch() {
   try {
@@ -111,7 +111,7 @@ async function sendToWatch() {
 
 ```tsx
 import { useEffect } from 'react';
-import { onMessageReceived } from 'react-native-wearables';
+import { onMessageReceived } from '@rn-libs/react-native-wearables';
 
 function App() {
   useEffect(() => {
@@ -171,7 +171,7 @@ Below is the minimal code to **send messages to** and **receive messages from** 
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
 
-// The path must match the one used in react-native-wearables
+// The path must match the one used in @rn-libs/react-native-wearables
 private const val MESSAGE_PATH = "/wearables_message"
 
 fun sendMessageToPhone(context: Context) {

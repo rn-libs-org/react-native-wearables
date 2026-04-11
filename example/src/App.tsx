@@ -14,7 +14,7 @@ import {
   isWatchAppInstalled,
   onMessageReceived,
   type WearableMessage,
-} from 'react-native-wearables';
+} from '@rn-libs/react-native-wearables';
 
 export default function App() {
   const [paired, setPaired] = useState<boolean | null>(null);

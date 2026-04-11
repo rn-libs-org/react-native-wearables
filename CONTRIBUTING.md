@@ -15,7 +15,7 @@ We want this community to be friendly and respectful to each other. Please follo
 ## Project Structure
 
 ```
-react-native-wearables/
+react-native-wearables/   (npm: @rn-libs/react-native-wearables)
 ├── src/                  # TypeScript source (JS API)
 │   ├── index.tsx         # Public API exports
 │   ├── NativeWearables.ts# TurboModule spec
@@ -60,8 +60,8 @@ yarn example ios
 
 ### Editing Native Code
 
-- **iOS:** Open `example/ios/WearablesExample.xcworkspace` in Xcode. Library source is at `Pods > Development Pods > react-native-wearables`.
-- **Android:** Open `example/android` in Android Studio. Library source is under the `react-native-wearables` module.
+- **iOS:** Open `example/ios/WearablesExample.xcworkspace` in Xcode. Library source is at `Pods > Development Pods > Wearables`.
+- **Android:** Open `example/android` in Android Studio. Library source is under the `@rn-libs/react-native-wearables` module.
 
 ### Verifying New Architecture
 

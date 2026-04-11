@@ -1,6 +1,6 @@
 # Wearables Example App
 
-A demo React Native app that exercises every feature of `react-native-wearables` — checking watch status, sending messages, and receiving messages from a paired watch.
+A demo React Native app that exercises every feature of `@rn-libs/react-native-wearables` — checking watch status, sending messages, and receiving messages from a paired watch.
 
 ## Prerequisites
 
