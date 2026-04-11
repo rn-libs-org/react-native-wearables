@@ -1,5 +1,5 @@
 {
-  "name": "react-native-wearables-example",
+  "name": "@rn-libs/react-native-wearables-example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
