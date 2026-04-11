@@ -34,7 +34,7 @@ export function isPaired(): Promise<boolean> {
  * Check if the paired watch is currently reachable.
  *
  * - **iOS**: Uses `WCSession.isReachable`.
- * - **Android**: Checks for connected Wear OS nodes.
+ * - **Android**: Checks for nearby connected Wear OS nodes.
  */
 export function isReachable(): Promise<boolean> {
   return NativeWearables.isReachable();
