@@ -3,6 +3,10 @@
 
 @interface Wearables () <WCSessionDelegate>
 @property (nonatomic, assign) BOOL hasListeners;
+@property (nonatomic, assign) BOOL isSessionActivated;
+@property (nonatomic, strong) NSDictionary *pendingMessage;
+@property (nonatomic, copy) RCTPromiseResolveBlock pendingResolve;
+@property (nonatomic, copy) RCTPromiseRejectBlock pendingReject;
 @end
 
 @implementation Wearables
@@ -10,12 +14,13 @@
 RCT_EXPORT_MODULE()
 
 + (BOOL)requiresMainQueueSetup {
-  return NO;
+  return YES;
 }
 
 - (instancetype)init {
   self = [super init];
   if (self) {
+    _isSessionActivated = NO;
     if ([WCSession isSupported]) {
       WCSession *session = [WCSession defaultSession];
       session.delegate = self;
@@ -45,20 +50,78 @@ RCT_EXPORT_MODULE()
     return;
   }
 
-  WCSession *session = [WCSession defaultSession];
-
-  if (!session.isReachable) {
-    reject(@"ERR_UNREACHABLE", @"Watch is not reachable", nil);
+  if (!self.isSessionActivated) {
+    self.pendingMessage = message;
+    self.pendingResolve = resolve;
+    self.pendingReject = reject;
     return;
   }
 
-  [session sendMessage:message
-          replyHandler:^(NSDictionary<NSString *,id> * _Nonnull replyMessage) {
+  [self processMessageToWatch:message resolve:resolve reject:reject];
+}
+
+- (void)processMessageToWatch:(NSDictionary *)message
+                       resolve:(RCTPromiseResolveBlock)resolve
+                        reject:(RCTPromiseRejectBlock)reject {
+  WCSession *session = [WCSession defaultSession];
+
+  if (!session.isPaired) {
+    reject(@"ERR_NOT_PAIRED", @"No Apple Watch is paired with this iPhone.", nil);
+    return;
+  }
+
+  if (!session.isWatchAppInstalled) {
+    reject(@"ERR_APP_NOT_INSTALLED", @"The watch app is not installed on the paired Apple Watch.", nil);
+    return;
+  }
+
+  if (session.isReachable) {
+    [session sendMessage:message
+            replyHandler:^(NSDictionary<NSString *,id> * _Nonnull replyMessage) {
+      resolve(nil);
+    }
+            errorHandler:^(NSError * _Nonnull error) {
+      [self fallbackToApplicationContext:message resolve:resolve reject:reject];
+    }];
+  } else {
+    [self fallbackToApplicationContext:message resolve:resolve reject:reject];
+  }
+}
+
+- (void)fallbackToApplicationContext:(NSDictionary *)message
+                              resolve:(RCTPromiseResolveBlock)resolve
+                               reject:(RCTPromiseRejectBlock)reject {
+  NSError *error = nil;
+  [[WCSession defaultSession] updateApplicationContext:message error:&error];
+
+  if (error) {
+    reject(@"ERR_CONTEXT_UPDATE_FAILED", error.localizedDescription, error);
+  } else {
     resolve(nil);
   }
-          errorHandler:^(NSError * _Nonnull error) {
-    reject(@"ERR_SEND_FAILED", error.localizedDescription, error);
-  }];
+}
+
+- (void)processPendingMessage {
+  if (self.pendingMessage && self.pendingResolve && self.pendingReject) {
+    NSDictionary *message = self.pendingMessage;
+    RCTPromiseResolveBlock resolve = self.pendingResolve;
+    RCTPromiseRejectBlock reject = self.pendingReject;
+
+    self.pendingMessage = nil;
+    self.pendingResolve = nil;
+    self.pendingReject = nil;
+
+    [self processMessageToWatch:message resolve:resolve reject:reject];
+  }
+}
+
+- (void)rejectPendingMessage:(NSString *)code message:(NSString *)message {
+  if (self.pendingReject) {
+    self.pendingReject(code, message, nil);
+  }
+  self.pendingMessage = nil;
+  self.pendingResolve = nil;
+  self.pendingReject = nil;
 }
 
 - (void)isPaired:(RCTPromiseResolveBlock)resolve
@@ -91,7 +154,19 @@ RCT_EXPORT_MODULE()
 - (void)session:(WCSession *)session
     activationDidCompleteWithState:(WCSessionActivationState)activationState
                              error:(NSError *)error {
-  // Required delegate method — session activation completed
+  if (error) {
+    [self rejectPendingMessage:@"ERR_SESSION_ACTIVATION_FAILED"
+                       message:error.localizedDescription];
+    return;
+  }
+
+  if (activationState == WCSessionActivationStateActivated) {
+    self.isSessionActivated = YES;
+    [self processPendingMessage];
+  } else {
+    [self rejectPendingMessage:@"ERR_SESSION_ACTIVATION_FAILED"
+                       message:@"WatchConnectivity session failed to activate."];
+  }
 }
 
 - (void)sessionDidBecomeInactive:(WCSession *)session {
@@ -99,7 +174,7 @@ RCT_EXPORT_MODULE()
 }
 
 - (void)sessionDidDeactivate:(WCSession *)session {
-  // Required on iOS — reactivate session to support watch switching
+  self.isSessionActivated = NO;
   [[WCSession defaultSession] activateSession];
 }
 
