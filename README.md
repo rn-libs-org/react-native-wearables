@@ -8,13 +8,13 @@ A cross-platform React Native library for communicating with smartwatches — **
 
 ## Features
 
-| Feature               | iOS (Apple Watch)             | Android (Wear OS)                       |
-| --------------------- | ----------------------------- | --------------------------------------- |
-| `sendMessage`         | WCSession                     | MessageClient (nearby nodes)            |
-| `isPaired`            | WCSession.isPaired            | NodeClient.connectedNodes               |
-| `isReachable`         | WCSession.isReachable         | Node.isNearby filter                    |
-| `isWatchAppInstalled` | WCSession.isWatchAppInstalled | Always `false`                          |
-| `onMessageReceived`   | WCSessionDelegate             | MessageClient.OnMessageReceivedListener |
+| Feature               | iOS (Apple Watch)                       | Android (Wear OS)                       |
+| --------------------- | --------------------------------------- | --------------------------------------- |
+| `sendMessage`         | WCSession + applicationContext fallback | MessageClient (nearby nodes)            |
+| `isPaired`            | WCSession.isPaired                      | NodeClient.connectedNodes               |
+| `isReachable`         | WCSession.isReachable                   | Node.isNearby filter                    |
+| `isWatchAppInstalled` | WCSession.isWatchAppInstalled           | Always `false`                          |
+| `onMessageReceived`   | WCSessionDelegate                       | MessageClient.OnMessageReceivedListener |
 
 ## Table of Contents
 
@@ -130,10 +130,8 @@ function App() {
 
 Send a key-value message to the connected watch.
 
-- **iOS** — Uses `WCSession.sendMessage`. The watch must be reachable.
-- **Android** — Uses `MessageClient.sendMessage` to the first nearby Bluetooth-connected node.
-
-Throws if the watch is not reachable or no nearby nodes are found.
+- **iOS** — Uses `WCSession.sendMessage` when the watch is reachable, and automatically falls back to `updateApplicationContext` when the watch is unreachable or the send fails. Throws if the watch is not paired or the watch app is not installed.
+- **Android** — Uses `MessageClient.sendMessage` to the first nearby Bluetooth-connected node. Throws if no nearby nodes are found.
 
 ### `isPaired(): Promise<boolean>`
 
