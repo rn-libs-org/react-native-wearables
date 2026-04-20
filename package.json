@@ -1,6 +1,6 @@
 {
   "name": "@rn-libs/react-native-wearables",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React Native Wearables - Connect to Apple Watch & Wear OS",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -45,18 +45,24 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "apple-watch",
+    "wear-os",
+    "wearables",
+    "watchconnectivity",
+    "smartwatch",
+    "watch"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harishkumar69/react-native-wearables.git"
+    "url": "git+https://github.com/rn-libs-org/react-native-wearables.git"
   },
   "author": "harishkumar69 <harishkumar6317@gmail.com> (https://github.com/harishkumar69)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/harishkumar69/react-native-wearables/issues"
+    "url": "https://github.com/rn-libs-org/react-native-wearables/issues"
   },
-  "homepage": "https://github.com/harishkumar69/react-native-wearables#readme",
+  "homepage": "https://github.com/rn-libs-org/react-native-wearables#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
