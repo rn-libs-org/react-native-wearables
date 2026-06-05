@@ -8,13 +8,14 @@ A cross-platform React Native library for communicating with smartwatches — **
 
 ## Features
 
-| Feature               | iOS (Apple Watch)                       | Android (Wear OS)                       |
-| --------------------- | --------------------------------------- | --------------------------------------- |
-| `sendMessage`         | WCSession + applicationContext fallback | MessageClient (nearby nodes)            |
-| `isPaired`            | WCSession.isPaired                      | NodeClient.connectedNodes               |
-| `isReachable`         | WCSession.isReachable                   | Node.isNearby filter                    |
-| `isWatchAppInstalled` | WCSession.isWatchAppInstalled           | Always `false`                          |
-| `onMessageReceived`   | WCSessionDelegate                       | MessageClient.OnMessageReceivedListener |
+| Feature                    | iOS (Apple Watch)                       | Android (Wear OS)                       |
+| -------------------------- | --------------------------------------- | --------------------------------------- |
+| `sendMessage`              | WCSession + applicationContext fallback | MessageClient (nearby nodes)            |
+| `updateApplicationContext` | WCSession.updateApplicationContext      | No-op (resolves immediately)            |
+| `isPaired`                 | WCSession.isPaired                      | NodeClient.connectedNodes               |
+| `isReachable`              | WCSession.isReachable                   | Node.isNearby filter                    |
+| `isWatchAppInstalled`      | WCSession.isWatchAppInstalled           | Always `false`                          |
+| `onMessageReceived`        | WCSessionDelegate                       | MessageClient.OnMessageReceivedListener |
 
 ## Table of Contents
 
@@ -77,12 +78,14 @@ import {
   isPaired,
   isReachable,
   isWatchAppInstalled,
+  updateApplicationContext,
 } from '@rn-libs/react-native-wearables';
 
 async function checkWatch() {
   const paired = await isPaired();
   const reachable = await isReachable();
   const installed = await isWatchAppInstalled(); // iOS only
+  await updateApplicationContext({ lastCheck: Date.now() });
 
   console.log({ paired, reachable, installed });
 }
@@ -132,6 +135,13 @@ Send a key-value message to the connected watch.
 
 - **iOS** — Uses `WCSession.sendMessage` when the watch is reachable, and automatically falls back to `updateApplicationContext` when the watch is unreachable or the send fails. Throws if the watch is not paired or the watch app is not installed.
 - **Android** — Uses `MessageClient.sendMessage` to the first nearby Bluetooth-connected node. Throws if no nearby nodes are found.
+
+### `updateApplicationContext(context: Record<string, unknown>): Promise<void>`
+
+Update the watch application context with the latest state.
+
+- **iOS** — Uses `WCSession.updateApplicationContext` to store the latest context for background delivery. Each call overwrites the previous context.
+- **Android** — Resolves immediately. There is no direct equivalent in this bridge.
 
 ### `isPaired(): Promise<boolean>`
 
