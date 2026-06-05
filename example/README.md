@@ -75,11 +75,11 @@ yarn example web
 
 ## What the App Does
 
-| Feature                   | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Check Watch Status**    | Calls `isPaired()`, `isReachable()`, and `isWatchAppInstalled()` and displays the results |
-| **Send Message to Watch** | Sends a JSON payload via `sendMessage()`                                                  |
-| **Receive Messages**      | Listens with `onMessageReceived()` and displays the last received message                 |
+| Feature                   | Description                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Check Watch Status**    | Calls `isPaired()`, `isReachable()`, `isWatchAppInstalled()`, and `updateApplicationContext()` |
+| **Send Message to Watch** | Sends a JSON payload via `sendMessage()`                                                       |
+| **Receive Messages**      | Listens with `onMessageReceived()` and displays the last received message                      |
 
 ## Project Structure
 

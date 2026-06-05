@@ -21,6 +21,21 @@ export function sendMessage(message: WearableMessage): Promise<void> {
 }
 
 /**
+ * Update the application context for background delivery to the watch.
+ *
+ * - **iOS**: Uses `WCSession.updateApplicationContext`. Data is delivered
+ *   even when the watch app is not running. Overwrites previous context.
+ * - **Android**: No-op (resolves immediately).
+ *
+ * @param context - Dictionary of key-value pairs to send as application context.
+ */
+export function updateApplicationContext(
+  context: WearableMessage
+): Promise<void> {
+  return NativeWearables.updateApplicationContext(context);
+}
+
+/**
  * Check if a watch is paired with this device.
  *
  * - **iOS**: Uses `WCSession.isPaired`.

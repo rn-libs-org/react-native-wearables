@@ -12,6 +12,7 @@ import {
   isPaired,
   isReachable,
   isWatchAppInstalled,
+  updateApplicationContext,
   onMessageReceived,
   type WearableMessage,
 } from '@rn-libs/react-native-wearables';
@@ -42,6 +43,12 @@ export default function App() {
         isReachable(),
         isWatchAppInstalled(),
       ]);
+      await updateApplicationContext({
+        paired: p,
+        reachable: r,
+        watchAppInstalled: w,
+        checkedAt: Date.now(),
+      });
       setPaired(p);
       setReachable(r);
       setWatchAppInstalled(w);

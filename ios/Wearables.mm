@@ -101,6 +101,36 @@ RCT_EXPORT_MODULE()
   }
 }
 
+- (void)updateApplicationContext:(NSDictionary *)context
+                          resolve:(RCTPromiseResolveBlock)resolve
+                           reject:(RCTPromiseRejectBlock)reject {
+  if (![WCSession isSupported]) {
+    reject(@"ERR_UNSUPPORTED", @"WatchConnectivity is not supported on this device", nil);
+    return;
+  }
+
+  if (!self.isSessionActivated) {
+    reject(@"ERR_SESSION_NOT_ACTIVE", @"WCSession is not yet activated", nil);
+    return;
+  }
+
+  WCSession *session = [WCSession defaultSession];
+
+  if (!session.isPaired) {
+    resolve(nil); // Silently succeed if no watch paired
+    return;
+  }
+
+  NSError *error = nil;
+  [session updateApplicationContext:context error:&error];
+
+  if (error) {
+    reject(@"ERR_CONTEXT_UPDATE_FAILED", error.localizedDescription, error);
+  } else {
+    resolve(nil);
+  }
+}
+
 - (void)processPendingMessage {
   if (self.pendingMessage && self.pendingResolve && self.pendingReject) {
     NSDictionary *message = self.pendingMessage;
