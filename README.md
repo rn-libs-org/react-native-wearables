@@ -12,6 +12,7 @@ A cross-platform React Native library for communicating with smartwatches — **
 | -------------------------- | --------------------------------------- | --------------------------------------- |
 | `sendMessage`              | WCSession + applicationContext fallback | MessageClient (nearby nodes)            |
 | `updateApplicationContext` | WCSession.updateApplicationContext      | No-op (resolves immediately)            |
+| `getApplicationContext`    | WCSession.receivedApplicationContext    | No-op (resolves `null`)                |
 | `isPaired`                 | WCSession.isPaired                      | NodeClient.connectedNodes               |
 | `isReachable`              | WCSession.isReachable                   | Node.isNearby filter                    |
 | `isWatchAppInstalled`      | WCSession.isWatchAppInstalled           | Always `false`                          |
@@ -142,6 +143,13 @@ Update the watch application context with the latest state.
 
 - **iOS** — Uses `WCSession.updateApplicationContext` to store the latest context for background delivery. Each call overwrites the previous context.
 - **Android** — Resolves immediately. There is no direct equivalent in this bridge.
+
+### `getApplicationContext(): Promise<Record<string, unknown> | null>`
+
+Retrieve the most recently received application context from the watch.
+
+- **iOS** — Returns `WCSession.default.receivedApplicationContext` (latest application context delivered by the watch). May resolve to an empty object.
+- **Android** — Resolves to `null` (no equivalent on Wear OS).
 
 ### `isPaired(): Promise<boolean>`
 

@@ -3,6 +3,7 @@ import { TurboModuleRegistry, type TurboModule } from 'react-native';
 export interface Spec extends TurboModule {
   sendMessage(message: Object): Promise<void>;
   updateApplicationContext(context: Object): Promise<void>;
+  getApplicationContext(): Promise<Object | null>;
   isPaired(): Promise<boolean>;
   isReachable(): Promise<boolean>;
   isWatchAppInstalled(): Promise<boolean>;

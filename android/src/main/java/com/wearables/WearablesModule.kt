@@ -136,6 +136,11 @@ class WearablesModule(reactContext: ReactApplicationContext) :
     promise.resolve(null)
   }
 
+  override fun getApplicationContext(promise: Promise) {
+    // iOS-only feature — always resolve null on Android
+    promise.resolve(null)
+  }
+
   override fun addListener(eventName: String) {
     listenerCount++
   }
