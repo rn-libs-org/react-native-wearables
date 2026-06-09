@@ -131,6 +131,26 @@ RCT_EXPORT_MODULE()
   }
 }
 
+- (void)getApplicationContext:(RCTPromiseResolveBlock)resolve
+                        reject:(RCTPromiseRejectBlock)reject {
+  if (![WCSession isSupported]) {
+    resolve(nil);
+    return;
+  }
+
+  if (!self.isSessionActivated) {
+    reject(@"ERR_SESSION_NOT_ACTIVE", @"WCSession is not yet activated", nil);
+    return;
+  }
+
+  NSDictionary *context = [WCSession defaultSession].receivedApplicationContext;
+  if (context && context.count > 0) {
+    resolve(context);
+  } else {
+    resolve(nil);
+  }
+}
+
 - (void)processPendingMessage {
   if (self.pendingMessage && self.pendingResolve && self.pendingReject) {
     NSDictionary *message = self.pendingMessage;

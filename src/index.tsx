@@ -65,6 +65,16 @@ export function isWatchAppInstalled(): Promise<boolean> {
 }
 
 /**
+ * Retrieve the most recently received application context from the watch.
+ *
+ * - **iOS**: Returns `WCSession.default.receivedApplicationContext`.
+ * - **Android**: No-op (resolves to `null`).
+ */
+export function getApplicationContext(): Promise<WearableMessage | null> {
+  return NativeWearables.getApplicationContext();
+}
+
+/**
  * Subscribe to messages received from the watch.
  *
  * @param listener - Callback invoked with the received message dictionary.
