@@ -2450,7 +2450,7 @@ PODS:
     - React-utils (= 0.83.0)
     - SocketRocket
   - SocketRocket (0.7.1)
-  - Wearables (0.1.3):
+  - Wearables (0.1.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -2803,7 +2803,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 11c08ff43a62009d48c71de000352e4515918801
   ReactCommon: 424cc34cf5055d69a3dcf02f3436481afb8b0f6f
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  Wearables: 9329be6693cca12f48107474e30d3b900953ab2b
+  Wearables: 0d0a3c515ae45ac21e36a219b9214af22f5a4eb5
   Yoga: 6ca93c8c13f56baeec55eb608577619b17a4d64e
 
 PODFILE CHECKSUM: 9c076fe036a62410e76c0f304cabaf271c27e144
